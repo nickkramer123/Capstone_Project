@@ -111,3 +111,14 @@ ggplot(predicted_prob, aes(x = df_cleaned$AGE)) +
 
 table(df_cleaned$AGE)
 
+
+df_cleaned <- df_cleaned |> 
+  mutate(JOBSAT = recode(SATJOB,
+                         `1` = 1,
+                         `2` = 1,
+                         `3` = 0,
+                         `4` = 0))
+logReg <- glm(formula = JOBSAT ~ AGE + SATFIN, family = binomial(link = "logit"), data = df_cleaned)
+summary(logReg)
+
+
