@@ -2,6 +2,7 @@ library(foreign)
 library(dplyr)
 library(tidyverse)
 library(MASS)
+library(brant)
   read.dct <- function(dct, labels.included = "yes") {
       temp <- readLines(dct)
       temp <- temp[grepl("_column", temp)]
@@ -54,6 +55,7 @@ df_cleaned$RACE <- factor(df_cleaned$RACE,
 df_cleaned$HEALTH <- factor(df_cleaned$HEALTH,
                             levels = c(1, 2, 3, 4),
                             labels = c("Excellent", "Good", "Fair", "Poor"))
+df_cleaned <- df_cleaned[!is.na(df_cleaned$AGE),]
 
 hist(df_cleaned$CHILDS,
      breaks = seq(-0.5, 8.5, by = 1),
@@ -89,4 +91,23 @@ model <- glm(SATJOB_BIN ~ YEAR + AGE,
              family = binomial(link = "logit"))
 summary(model)
 
+model <- polr(factor(SATJOB) ~ AGE, data = df_cleaned, Hess = TRUE)
+summary(model)
+brant(model)
+
+predicted_prob <- as.data.frame(predict(model,type = "probs"))
+colnames(predicted_prob) <- c("1", "2", "3", "4")
+ggplot(predicted_prob, aes(x = df_cleaned$AGE)) +
+  geom_line(aes(y = `1`, color = "Category 1"), size = 1) +
+  geom_line(aes(y = `2`, color = "Category 2"), size = 1) +
+  geom_line(aes(y = `3`, color = "Category 3"), size = 1) +
+  geom_line(aes(y = `4`, color = "Category 4"), size = 1) +
+  labs(title = "Ordinal Logistic Regression",
+       x = "AGE",
+       y = "Predicted Probability") +
+  scale_color_manual(values = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"),
+                     name = "Category") +
+  theme_minimal()
+
+table(df_cleaned$AGE)
 
