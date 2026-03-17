@@ -135,5 +135,42 @@ summary(model2)
 table(df_cleaned$RACE)
 
 # RACE, AGE, Income, Education
-model3 <- polr(factor(SATJOB) ~ AGE^2 + RACE + INCOME + EDUC, data = df_cleaned)
+model3 <- polr(factor(SATJOB) ~ AGE + RACE + factor(SEX) +factor(INCOM16) + EDUC, data = df_cleaned)
 summary(model3)
+
+df_cleaned$AGE <- as.numeric(as.character(df_cleaned$AGE))
+df1 <- df_cleaned |> 
+  dplyr::select(SATJOB, AGE, RACE, SEX, INCOM16, EDUC, HRS2)
+df1 <- df1 |> 
+  na.omit()
+mod <- polr(factor(SATJOB) ~ AGE + RACE + factor(SEX) + EDUC + factor(INCOM16) + HRS2,
+            data = df1)
+summary(mod)
+
+df2 <- df1 |> 
+  mutate(JOBSAT = recode(SATJOB,
+                         `1` = 1,
+                         `2` = 1,
+                         `3` = 0,
+                         `4` = 0))
+mod1 <- glm(formula = JOBSAT ~ RACE + factor(SEX) + EDUC + AGE + factor(INCOM16) + HRS2, family = binomial(link = "logit"), data = df2)
+summary(mod1)
+
+age_mod <- glm(formula = JOBSAT ~ AGE, family = binomial(link = "logit"), data = df2)
+summary(age_mod)
+
+newdata <- data.frame(
+  AGE = seq(min(df2$AGE, na.rm = TRUE),
+            max(df2$AGE, na.rm = TRUE),
+            by = 1)
+)
+
+newdata$pred_prob <- predict(age_mod, newdata, type = "response")
+
+ggplot(newdata, aes(x = AGE, y = pred_prob)) +
+  geom_line() +
+  labs(
+    title = "Probability of Job Satisfaction by Age",
+    x = "Age",
+    y = "Predicted Probability of Being Satisfied"
+  )
