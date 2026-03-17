@@ -1,0 +1,9 @@
+
+infile dictionary {
+
+_column(1) 	 numeric 		 BALLOT 		 %20f 		 "ballot used for interview" 
+_column(6) 	 numeric 		 ID_ 		 %20f 		 "Respondent id number" 
+_column(11) 	 numeric 		 YEAR 		 %20f 		 "GSS year for this respondent" 
+_column(16) 	 numeric 		 REG16_7222 		 %20f 		 "Region of residence, age 16" 
+_column(21) 	 numeric 		 CLASS_ 		 %20f 		 "subjective class identification" 
+}

@@ -3,34 +3,34 @@ library(dplyr)
 library(tidyverse)
 library(MASS)
 library(brant)
-  read.dct <- function(dct, labels.included = "yes") {
-      temp <- readLines(dct)
-      temp <- temp[grepl("_column", temp)]
-      switch(labels.included,
-             yes = {
-                 pattern <- "_column\\(([0-9]+)\\)\\s+([a-z0-9]+)\\s+(.*)\\s+%([0-9]+)[a-z]\\s+(.*)"
-                 classes <- c("numeric", "character", "character", "numeric", "character")
-                 N <- 5
-                 NAMES <- c("StartPos", "Str", "ColName", "ColWidth", "ColLabel")
-             },
-             no = {
-                 pattern <- "_column\\(([0-9]+)\\)\\s+([a-z0-9]+)\\s+(.*)\\s+%([0-9]+).*"
-                 classes <- c("numeric", "character", "character", "numeric")
-                 N <- 4
-                 NAMES <- c("StartPos", "Str", "ColName", "ColWidth")
-             })
-      temp_metadata <- setNames(lapply(1:N, function(x) {
-          out <- gsub(pattern, paste("\\", x, sep = ""), temp)
-          out <- gsub("^\\s+|\\s+$", "", out)
-          out <- gsub('\"', "", out, fixed = TRUE)
-          class(out) <- classes[x] ; out }), NAMES)
-      temp_metadata[["ColName"]] <- make.names(gsub("\\s", "", temp_metadata[["ColName"]]))
-      temp_metadata
-  }
+read.dct <- function(dct, labels.included = "yes") {
+  temp <- readLines(dct)
+  temp <- temp[grepl("_column", temp)]
+  switch(labels.included,
+         yes = {
+           pattern <- "_column\\(([0-9]+)\\)\\s+([a-z0-9]+)\\s+(.*)\\s+%([0-9]+)[a-z]\\s+(.*)"
+           classes <- c("numeric", "character", "character", "numeric", "character")
+           N <- 5
+           NAMES <- c("StartPos", "Str", "ColName", "ColWidth", "ColLabel")
+         },
+         no = {
+           pattern <- "_column\\(([0-9]+)\\)\\s+([a-z0-9]+)\\s+(.*)\\s+%([0-9]+).*"
+           classes <- c("numeric", "character", "character", "numeric")
+           N <- 4
+           NAMES <- c("StartPos", "Str", "ColName", "ColWidth")
+         })
+  temp_metadata <- setNames(lapply(1:N, function(x) {
+    out <- gsub(pattern, paste("\\", x, sep = ""), temp)
+    out <- gsub("^\\s+|\\s+$", "", out)
+    out <- gsub('\"', "", out, fixed = TRUE)
+    class(out) <- classes[x] ; out }), NAMES)
+  temp_metadata[["ColName"]] <- make.names(gsub("\\s", "", temp_metadata[["ColName"]]))
+  temp_metadata
+}
 
-  read.dat <- function(dat, metadata_var, labels.included = "yes") {
-      read.table(dat, col.names = metadata_var[["ColName"]])
-  }
+read.dat <- function(dat, metadata_var, labels.included = "yes") {
+  read.table(dat, col.names = metadata_var[["ColName"]])
+}
 
 GSS_metadata1 <- read.dct("GSS_.dct")
 GSS_ascii1 <- read.dat("GSS_.dat", GSS_metadata1)
@@ -53,7 +53,7 @@ sum(is.na(GSS$SATJOB))
 df_no_neg <- na.omit(GSS)
 df_cleaned <- GSS[!is.na(GSS$SATJOB), ]
 df_cleaned$SATJOB_BIN <- ifelse(df_cleaned$SATJOB %in% c(1, 2), 0,
-                          ifelse(df_cleaned$SATJOB %in% c(3, 4), 1, NA))
+                                ifelse(df_cleaned$SATJOB %in% c(3, 4), 1, NA))
 df_cleaned$RACE <- factor(df_cleaned$RACE,
                           levels = c(1, 2, 3),
                           labels = c("White", "Black", "Other"))
