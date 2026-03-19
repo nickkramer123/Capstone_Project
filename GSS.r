@@ -143,9 +143,12 @@ df1 <- df_cleaned |>
   dplyr::select(SATJOB, AGE, RACE, SEX, INCOM16, EDUC, HRS2)
 df1 <- df1 |> 
   na.omit()
-mod <- polr(factor(SATJOB) ~ AGE + RACE + factor(SEX) + EDUC + factor(INCOM16) + HRS2,
+final_ord_mod <- polr(factor(SATJOB) ~ AGE + RACE + factor(SEX) + EDUC + factor(INCOM16) + HRS2,
             data = df1)
-summary(mod)
+summary(final_ord_mod)
+
+age_ord <- polr(factor(SATJOB) ~ AGE, data = df1)
+summary(age_ord)
 
 df2 <- df1 |> 
   mutate(JOBSAT = recode(SATJOB,
@@ -153,8 +156,8 @@ df2 <- df1 |>
                          `2` = 1,
                          `3` = 0,
                          `4` = 0))
-mod1 <- glm(formula = JOBSAT ~ RACE + factor(SEX) + EDUC + AGE + factor(INCOM16) + HRS2, family = binomial(link = "logit"), data = df2)
-summary(mod1)
+final_log_mod <- glm(formula = JOBSAT ~ RACE + factor(SEX) + EDUC + AGE + factor(INCOM16) + HRS2, family = binomial(link = "logit"), data = df2)
+summary(final_log_mod)
 
 age_mod <- glm(formula = JOBSAT ~ AGE, family = binomial(link = "logit"), data = df2)
 summary(age_mod)
@@ -174,3 +177,15 @@ ggplot(newdata, aes(x = AGE, y = pred_prob)) +
     x = "Age",
     y = "Predicted Probability of Being Satisfied"
   )
+
+df1 <- df1 |>
+  dplyr::mutate(
+    AGE_c = AGE - mean(AGE, na.rm = TRUE),
+    AGE_c2 = AGE_c^2
+  )
+
+model_ord <- polr(
+  factor(SATJOB) ~ AGE_c + AGE_c2 + RACE + factor(SEX) + EDUC + factor(INCOM16) + HRS2,
+  data = df1
+)
+summary(model_ord)
