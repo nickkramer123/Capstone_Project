@@ -189,3 +189,12 @@ model_ord <- polr(
   data = df1
 )
 summary(model_ord)
+
+library(mgcv)
+
+gam_model <- gam(SATJOB ~ s(AGE) + RACE + factor(SEX) + EDUC + INCOM16 + HRS2,
+                 data = df1)
+summary(gam_model)
+
+plot_data <- plot(gam_model, se = TRUE, rug = FALSE)
+
