@@ -22,23 +22,19 @@ df['satjob_encoded'] = df['satjob'].map(satjob_mapping)  # use .map not .replace
 
 # Drop high-cardinality and leakage columns
 drop_cols = ['satjob', 'satjob_encoded', 'id_', 'occ10', 'indus10', 
-             'ethnic', 'ballot', 'year', 'income']
-#, 'wrkstat', 'wrkslf', 'age', 'income'
+             'ethnic', 'ballot', 'year', 'income', 'wrkstat', 'marital']
+#, 'wrkslf', health
 feature_cols = [c for c in df.columns if c not in drop_cols]
-
+print(feature_cols)
 # Check missingness BEFORE dropna
 target = 'satjob_encoded'
 working = df[feature_cols + [target]]
-print("Missingness per column:")
-print(working.isnull().mean().sort_values(ascending=False))
-print(f"\nRows before dropna: {len(working)}")
 
 # Drop columns with 40% missing, then drop remaining null rows
 thresh = 0.60
 keep_cols = working.columns[working.isnull().mean() < thresh].tolist()
 working = working[keep_cols].dropna()
-print(f"Rows after dropna: {len(working)}")
-print(f"Class balance:\n{working[target].value_counts()}")
+
 
 X = working[[c for c in keep_cols if c != target]]
 y = working[target]
@@ -48,19 +44,19 @@ X = pd.get_dummies(X, drop_first=True)
 scaler = StandardScaler()
 
 # Test AUC with and without specific variables
-#def quick_auc(X_in, y_in):
-#    Xtr, Xte, ytr, yte = train_test_split(X_in, y_in, test_size=0.2, random_state=42)
-#    sc = StandardScaler()
-#    Xtr = sc.fit_transform(Xtr)
-#    Xte = sc.transform(Xte)
-#    m = LogisticRegressionCV(cv=5, l1_ratios=(1,), solver='saga', Cs=10,
-#                              max_iter=500, random_state=42, class_weight='balanced',
-#                              use_legacy_attributes=False)
-#    m.fit(Xtr, ytr)
-#    return roc_auc_score(yte, m.predict_proba(Xte)[:, 1])
+def quick_auc(X_in, y_in):
+    Xtr, Xte, ytr, yte = train_test_split(X_in, y_in, test_size=0.2, random_state=42)
+    sc = StandardScaler()
+    Xtr = sc.fit_transform(Xtr)
+    Xte = sc.transform(Xte)
+    m = LogisticRegressionCV(cv=5, l1_ratios=(1,), solver='saga', Cs=10,
+                              max_iter=500, random_state=42, class_weight='balanced',
+                              use_legacy_attributes=False)
+    m.fit(Xtr, ytr)
+    return roc_auc_score(yte, m.predict_proba(Xte)[:, 1])
 
 # Baseline
-#print(f"Baseline AUC: {quick_auc(X, y):.4f}")
+print(f"Baseline AUC: {quick_auc(X, y):.4f}")
 
 # Test dropping each original column one at a time
 #original_features = [c for c in working.columns if c not in [target, 'decade']]
@@ -72,6 +68,15 @@ scaler = StandardScaler()
 #    X_reduced = X.drop(columns=cols_to_drop)
 #    auc = quick_auc(X_reduced, y)
 #    print(f"Drop '{col}': AUC={auc:.4f}")
+
+
+for name, cols in subsets.items():
+    # Only keep cols that actually exist in working
+    cols = [c for c in cols if c in working.columns]
+    X_sub = pd.get_dummies(working[cols], drop_first=True)
+    auc = quick_auc(X_sub, y)
+    print(f"{name:20s} ({len(cols)} vars): AUC={auc:.4f}")
+
 
 # 1. Check how many features you have after get_dummies
 print(X.shape) 
