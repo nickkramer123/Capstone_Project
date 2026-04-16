@@ -21,10 +21,16 @@ satjob_mapping = {'Very dissatisfied': 0, 'A little dissatisfied': 0,
 df['satjob_encoded'] = df['satjob'].map(satjob_mapping)  # use .map not .replace
 
 # Drop high-cardinality and leakage columns
-drop_cols = ['satjob', 'satjob_encoded', 'id_', 'occ10', 'indus10', 
-             'ethnic', 'ballot', 'year', 'income', 'wrkstat', 'marital']
+drop_cols = ['happy', 'satjob', 'satjob_encoded', 'id_', 'occ10', 'indus10', 
+             'ethnic', 'ballot', 'year', 'income', 'wrkstat', 'marital','hrs2']
 #, 'wrkslf', health
 feature_cols = [c for c in df.columns if c not in drop_cols]
+print(df.dtypes)
+df = df.replace('89 or older', 90)
+
+df['age'] = df['age'].astype(float)
+
+print(df.dtypes)
 print(feature_cols)
 # Check missingness BEFORE dropna
 target = 'satjob_encoded'
@@ -35,6 +41,7 @@ thresh = 0.60
 keep_cols = working.columns[working.isnull().mean() < thresh].tolist()
 working = working[keep_cols].dropna()
 
+print(working['year'])
 
 X = working[[c for c in keep_cols if c != target]]
 y = working[target]
@@ -70,12 +77,12 @@ print(f"Baseline AUC: {quick_auc(X, y):.4f}")
 #    print(f"Drop '{col}': AUC={auc:.4f}")
 
 
-for name, cols in subsets.items():
-    # Only keep cols that actually exist in working
-    cols = [c for c in cols if c in working.columns]
-    X_sub = pd.get_dummies(working[cols], drop_first=True)
-    auc = quick_auc(X_sub, y)
-    print(f"{name:20s} ({len(cols)} vars): AUC={auc:.4f}")
+#for name, cols in subsets.items():
+#    # Only keep cols that actually exist in working
+#    cols = [c for c in cols if c in working.columns]
+#    X_sub = pd.get_dummies(working[cols], drop_first=True)
+#    auc = quick_auc(X_sub, y)
+#    print(f"{name:20s} ({len(cols)} vars): AUC={auc:.4f}")
 
 
 # 1. Check how many features you have after get_dummies
@@ -94,6 +101,7 @@ model = LogisticRegressionCV(
     l1_ratios=(1,),  
     solver='saga',
     max_iter=1000,
+    Cs=np.logspace(-2, 2, 50),
     random_state=42,
     class_weight='balanced'
 )
@@ -120,7 +128,7 @@ print(coef_df.to_string(index=False))
 
 
 
-working['decade'] = df.loc[working.index, 'year'].apply(lambda x: (x // 10) * 10)
+working['decade'] = df.loc[working.index, 'year'].apply(lambda x: (x // 1) * 1)
 
 decade_results = {}
 
@@ -157,7 +165,7 @@ for decade, group in working.groupby('decade'):
     decade_results[decade] = {'auc': auc, 'coefs': coefs, 'n': len(group)}
     print(f"{decade}s — n={len(group)}, AUC={auc:.4f}")
 
-feature = 'educ'
+feature = 'age'
 print(f"\n'{feature}' coefficient over time:")
 for decade, res in sorted(decade_results.items()):
     coef = res['coefs'].get(feature, 0)
