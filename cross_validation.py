@@ -21,17 +21,17 @@ satjob_mapping = {'Very dissatisfied': 0, 'A little dissatisfied': 0,
 df['satjob_encoded'] = df['satjob'].map(satjob_mapping)  # use .map not .replace
 
 # Drop high-cardinality and leakage columns
-drop_cols = ['happy', 'satjob', 'satjob_encoded', 'id_', 'occ10', 'indus10', 
+drop_cols = ['satjob', 'satjob_encoded', 'id_', 'occ10', 'indus10', 
              'ethnic', 'ballot', 'year', 'income', 'wrkstat', 'marital','hrs2']
 #, 'wrkslf', health
 feature_cols = [c for c in df.columns if c not in drop_cols]
-print(df.dtypes)
+#print(df.dtypes)
 df = df.replace('89 or older', 90)
 
 df['age'] = df['age'].astype(float)
 
-print(df.dtypes)
-print(feature_cols)
+#print(df.dtypes)
+#print(feature_cols)
 # Check missingness BEFORE dropna
 target = 'satjob_encoded'
 working = df[feature_cols + [target]]
@@ -41,7 +41,7 @@ thresh = 0.60
 keep_cols = working.columns[working.isnull().mean() < thresh].tolist()
 working = working[keep_cols].dropna()
 
-print(working['year'])
+print(df['year'])
 
 X = working[[c for c in keep_cols if c != target]]
 y = working[target]
@@ -63,7 +63,7 @@ def quick_auc(X_in, y_in):
     return roc_auc_score(yte, m.predict_proba(Xte)[:, 1])
 
 # Baseline
-print(f"Baseline AUC: {quick_auc(X, y):.4f}")
+#print(f"Baseline AUC: {quick_auc(X, y):.4f}")
 
 # Test dropping each original column one at a time
 #original_features = [c for c in working.columns if c not in [target, 'decade']]
@@ -86,7 +86,7 @@ print(f"Baseline AUC: {quick_auc(X, y):.4f}")
 
 
 # 1. Check how many features you have after get_dummies
-print(X.shape) 
+#print(X.shape) 
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
@@ -111,9 +111,9 @@ model.fit(X_train_scaled, y_train)
 y_pred = model.predict(X_test_scaled)
 y_prob = model.predict_proba(X_test_scaled)[:, 1]
 
-print(f"\nBest C: {model.C_[0]:.4f}")
-print(classification_report(y_test, y_pred))
-print(f"ROC-AUC: {roc_auc_score(y_test, y_prob):.4f}")
+#print(f"\nBest C: {model.C_[0]:.4f}")
+#print(classification_report(y_test, y_pred))
+#print(f"ROC-AUC: {roc_auc_score(y_test, y_prob):.4f}")
 
 # Selected features
 coef_df = pd.DataFrame({
@@ -121,8 +121,8 @@ coef_df = pd.DataFrame({
     'coefficient': model.coef_[0]
 }).query('coefficient != 0').sort_values('coefficient', key=abs, ascending=False)
 
-print(f"\n{len(coef_df)} features selected:")
-print(coef_df.to_string(index=False))
+#print(f"\n{len(coef_df)} features selected:")
+#print(coef_df.to_string(index=False))
 
 
 
